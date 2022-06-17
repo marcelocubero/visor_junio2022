@@ -1,0 +1,318 @@
+---
+title: "Visor Cuadrantes Urbanos"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+    theme: cerulean
+    social: menu
+    source_code: embed
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+defaultEncoding <- "UTF8"
+library(dplyr)
+library(sf)
+library(terra)
+library(raster)
+library(DT)
+library(ggplot2)
+library(plotly)
+library(leaflet)
+library(leaflet.extras)
+library(leafem)
+library(shiny)
+library(shinydashboard)
+library(shinyWidgets)
+library(rgdal)
+library(tidyverse)
+library(rmapshaper)
+library(leaflegend)
+```
+
+```{r}
+
+
+cantones <-
+  st_read("/vsicurl/https://marcelocubero.github.io/capas_TFG/cantones4.geojson",
+          quiet = TRUE)
+
+cuadrantes <-
+  st_read(
+    "/vsicurl/https://marcelocubero.github.io/capas_TFG/cuadrantescr.geojson",
+    quiet = TRUE
+  )
+
+mep <-
+  st_read("/vsicurl/https://marcelocubero.github.io/capas_TFG/mepcr_.geojson",
+          quiet = TRUE)
+
+localidades <-
+  st_read(
+    "/vsicurl/https://marcelocubero.github.io/capas_TFG/localidadescr_.geojson",
+    quiet = TRUE
+  )
+
+
+sf::sf_use_s2(FALSE)
+
+
+```
+
+Column {.sidebar}
+-----------------------------------------------------------------------
+```{r}
+
+# APROVACION
+lista_aprobacion <- unique(cuadrantes$aprob)
+lista_aprobacion <- sort(lista_aprobacion)
+lista_aprobacion <- c("Todas", lista_aprobacion)
+
+h2(" Cuadrantes Aprobados")
+selectInput(
+  inputId = "aprob",
+  label = "Aprobado",
+  choices = lista_aprobacion,
+  selected = "Todas"
+)
+
+# cANTONES
+lista_canton <- unique(cuadrantes$canton)
+lista_canton <- sort(lista_canton)
+lista_canton <- c("Todas", lista_canton)
+
+h2("Cantones")
+selectInput(
+  inputId = "canton",
+  label = "Cantón",
+  choices = lista_canton,
+  selected = "Todas"
+)
+
+# DISTRITOS
+lista_distrito <- unique(cuadrantes$distrito)
+lista_distrito <- sort(lista_distrito)
+lista_distrito <- c("Todas", lista_distrito)
+
+h2("Distrito")
+selectInput(
+  inputId = "distrito",
+  label = "Distritos",
+  choices = lista_distrito,
+  selected = "Todas"
+)
+
+
+
+h2("Área")
+numericRangeInput(
+  inputId = "area_m2",
+  label = "m2",
+  value = c(2000, 14000000),
+  width = NULL,
+  separator = " a ",
+  min = 2000,
+  max =
+    14000000,
+  step = NA
+)
+
+
+
+
+
+
+filtrarRegistros <-  reactive({
+  cuadrantes_f <-
+    cuadrantes  %>%
+    dplyr::select(area_m2, aprob, canton, distrito, nomb_zona)
+  
+  cuadrantes_f <-
+    cuadrantes_f  %>%
+    
+    
+    filter(area_m2 >= input$area_m2[1] &
+             area_m2 <= input$area_m2[2])
+  
+  
+  if (input$aprob != "Todas") {
+    cuadrantes_f <-
+      cuadrantes_f %>%
+      filter(aprob == input$aprob)
+  }
+  
+  
+  if (input$canton != "Todas") {
+    cuadrantes_f <-
+      cuadrantes_f %>%
+      filter(canton == input$canton)
+  }
+  
+  
+  if (input$distrito != "Todas") {
+    cuadrantes_f <-
+      cuadrantes_f %>%
+      filter(distrito == input$distrito)
+  }
+  
+  return(cuadrantes_f)
+})
+
+ 
+ 
+```
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Visor
+
+```{r}
+
+
+colores <- c("#4DAF4A" , "#B2FFFC", "#FFFF33")
+c_zona <- levels(as.factor(cuadrantes$nomb_zona))
+paleta <- colorFactor(palette = colores, domain = c_zona)
+
+icon_1 <- makeAwesomeIcon(
+  icon = "graduation-cap",
+  iconColor = "#87CEEB",
+  markerColor = "blue",
+  library = "fa"
+)
+
+icon_2 <- makeAwesomeIcon(
+  icon = "location-arrow",
+  iconColor = "#00FF7F",
+  markerColor = "#713d35",
+  library = "fa"
+)
+
+
+renderLeaflet({
+  registros <-
+    filtrarRegistros()
+  
+  mep_c <- mep [registros, , op = st_within]
+  localidades_c <- localidades [registros, , op = st_within]
+  cantones_c <- cantones [registros, , op = st_intersects]
+  
+  
+  
+  
+  
+  leaflet() %>%
+    addTiles(group = "OSM") %>%
+    addProviderTiles(providers$Esri.NatGeoWorldMap , group = "NatGeo") %>%
+    addProviderTiles(providers$CartoDB.DarkMatter, group = "CartoDB-Black") %>%
+    addProviderTiles("Esri.WorldImagery", group = "ESRI") %>%
+    
+    
+    addPolygons(
+      data = registros,
+      color = ~ paleta(nomb_zona),
+      fillOpacity = 1,
+      weight = 1,
+      opacity = 1,
+      stroke = TRUE,
+      group = "Cuadrantes",
+      popup = paste0("<strong> Cuadrante: <strong/>",
+                     registros$poblado)
+    ) %>%
+    
+    addLegend(
+      pal = paleta,
+      values = registros$nomb_zona,
+      opacity = 1,
+      title = "Zona"
+    ) %>%
+    
+    
+    addAwesomeMarkers(
+      data = mep_c,
+      icon = icon_1,
+      popup = paste0(mep_c$Nivel,
+                     ":<br>",
+                     mep_c$Nombre),
+      group = "Centros Educativos"
+    ) %>%
+    
+    addAwesomeMarkers(
+      data = localidades_c,
+      icon = icon_2,
+      popup = paste0(localidades_c$nombre),
+      group = "Localidades"
+    ) %>%
+    
+    
+    
+    addPolygons(
+      data = cantones_c,
+      color = "#00008B",
+      fillOpacity = 0,
+      weight = 1,
+      opacity = 1,
+      stroke = TRUE,
+      group = "Cantones",
+      popup = paste0("<strong> Cantón: <strong/>",
+                     cantones_c$canton)
+    ) %>%
+    
+    
+    addLayersControl(
+      "bottomleft",
+      baseGroups = c("OSM", "NatGeo", "CartoDB-Black", "ESRI"),
+      overlayGroups = c(
+        "Cantones" ,
+        "Cuadrantes" ,
+        "Centros Educativos" ,
+        "Localidades"
+      ),
+      options = layersControlOptions(collapsed = TRUE)
+    ) %>%
+    addScaleBar("bottomright") %>%
+    addMiniMap() %>%
+    addResetMapButton() %>%
+    addFullscreenControl() %>%
+    addControlGPS() %>%
+    addSearchOSM() %>%
+    addMouseCoordinates()
+  
+})
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+
+### Tabla
+
+```{r}
+
+
+
+renderDT({
+  registros <- filtrarRegistros()
+  
+  registros %>%
+    st_drop_geometry() %>%
+    datatable(options = list(
+      language = list(url = '//cdn.datatables.net/plug-ins/1.10.11/i18n/Spanish.json')
+    ))
+})
+
+
+
+
+```
+
+### Información
+
+```{r}
+
+```
+
+![](https://marcelocubero.github.io/capas_TFG/5.png){width='450px'} 
+![](https://marcelocubero.github.io/capas_TFG/INVU.jpg){width='450px
