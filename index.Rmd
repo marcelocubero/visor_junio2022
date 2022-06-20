@@ -298,6 +298,15 @@ renderDT({
   
   registros %>%
     st_drop_geometry() %>%
+    select(
+      Aprobado = aprob,
+      Cantón = canton,
+      Distrito= distrito,
+      Tipo_de_Zona= nomb_zona,
+      Área_en_m2 = area_m2
+      
+      
+    ) %>%
     datatable(options = list(
       language = list(url = '//cdn.datatables.net/plug-ins/1.10.11/i18n/Spanish.json')
     ))
