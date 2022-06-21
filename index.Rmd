@@ -105,25 +105,6 @@ selectInput(
 )
 
 
-
-h2("Área")
-numericRangeInput(
-  inputId = "area_m2",
-  label = "m2",
-  value = c(2000, 14000000),
-  width = NULL,
-  separator = " a ",
-  min = 2000,
-  max =
-    14000000,
-  step = NA
-)
-
-
-
-
-
-
 filtrarRegistros <-  reactive({
   cuadrantes_f <-
     cuadrantes  %>%
@@ -133,10 +114,7 @@ filtrarRegistros <-  reactive({
     cuadrantes_f  %>%
     
     
-    filter(area_m2 >= input$area_m2[1] &
-             area_m2 <= input$area_m2[2])
-  
-  
+    filter 
   if (input$aprob != "Todas") {
     cuadrantes_f <-
       cuadrantes_f %>%
@@ -323,5 +301,5 @@ renderDT({
 
 ```
 
-![](https://marcelocubero.github.io/capas_TFG/5.png){width='450px'} 
-![](https://marcelocubero.github.io/capas_TFG/INVU.jpg){width='450px
+![](https://marcelocubero.github.io/capas_TFG/5.png){width='400px'} 
+![](https://marcelocubero.github.io/capas_TFG/INVU.jpg){width='400px'} 
