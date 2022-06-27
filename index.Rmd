@@ -120,15 +120,15 @@ filtrarRegistros <-  reactive({
       cuadrantes_f %>%
       filter(aprob == input$aprob)
   }
-  
-  
+
+     
   if (input$canton != "Todas") {
     cuadrantes_f <-
       cuadrantes_f %>%
       filter(canton == input$canton)
   }
   
-  
+
   if (input$distrito != "Todas") {
     cuadrantes_f <-
       cuadrantes_f %>%
@@ -167,6 +167,18 @@ icon_2 <- makeAwesomeIcon(
   markerColor = "#713d35",
   library = "fa"
 )
+
+icon_3 <- iconList(
+  escuela = makeIcon("https://github.com/marcelocubero/capas_TFG/blob/main/school-solid.svg", 18 , 18),
+  colegio = makeIcon("https://github.com/marcelocubero/capas_TFG/blob/main/school-flag-solid.svg" , 18 , 18)
+)
+
+
+
+
+
+
+
 
 
 renderLeaflet({
@@ -256,7 +268,7 @@ renderLeaflet({
     addFullscreenControl() %>%
     addControlGPS() %>%
     addSearchOSM() %>%
-    addMouseCoordinates()
+    addMouseCoordinates() 
   
 })
 ```
