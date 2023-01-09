@@ -57,7 +57,7 @@ mep <-
 
 localidades <-
   st_read(
-    "/vsicurl/https://marcelocubero.github.io/capas_TFG/localidades_f.geojson",
+    "/vsicurl/https://marcelocubero.github.io/capas_TFG/localidades_fin.geojson",
     quiet = TRUE
   )
 
@@ -72,13 +72,11 @@ Column {.sidebar}
 ```{r}
 
 
-  # APROBACION
-
+# APROBACION
   
 lista_aprobacion <- unique(cuadrantes$aprob)
 lista_aprobacion <- sort(lista_aprobacion)
 lista_aprobacion <- c("Todos", lista_aprobacion)
-
 
 h2(" Cuadrantes Aprobados")
 selectInput(
@@ -88,15 +86,11 @@ selectInput(
   selected = "Todos"
 )
 
-
 # CANTONES
-
-
-  
+ 
 lista_canton <- unique(cuadrantes$canton)
 lista_canton <- sort(lista_canton)
 lista_canton <- c("Todos", lista_canton)
-
 
 h2("Cantones")
 selectInput(
@@ -108,12 +102,9 @@ selectInput(
 
 # DISTRITOS
 
-
-
 lista_distrito <- unique(cuadrantes$distrito)
 lista_distrito <- sort(lista_distrito)
 lista_distrito <- c("Todos", lista_distrito)
-
 
 h2("Distrito")
 selectInput(
@@ -123,18 +114,9 @@ selectInput(
   selected = "Todos"
 )
 
-
-# CSV 
-#h2("Agragar Capa")
-#fileInput("file1", "Cargar archivo", accept = ".csv")
-
-
-
-
 filtrarRegistros <-  reactive({
   cuadrantes_f <-
     cuadrantes  
-  
 
 # Filtrar aprobadas
   if (input$selector_aprob != "Todos") {
@@ -218,7 +200,6 @@ filtrarRegistros <-  reactive({
       )
   }
   
- 
 # Filtrar distritos
 
   if (input$selector_distrito != "Todos") {
@@ -226,9 +207,7 @@ filtrarRegistros <-  reactive({
       cuadrantes_f %>%
       filter(distrito == input$selector_distrito)
   }
-  
   return(cuadrantes_f)
-
 }
 )
 
@@ -249,20 +228,6 @@ colores <- c("#4DAF4A" , "#B2FFFC", "#FFFF33")
 c_zona <- levels(as.factor(cuadrantes$nomb_zona))
 paleta <- colorFactor(palette = colores, domain = c_zona)
 
-icon_1 <- makeAwesomeIcon(
-  icon = "graduation-cap",
-  iconColor = "#87CEEB",
-  markerColor = "blue",
-  library = "fa"
-)
-
-icon_2 <- makeAwesomeIcon(
-  icon = "location-arrow",
-  iconColor = "#00FF7F",
-  markerColor = "#713d35",
-  library = "fa"
-)
-
 html_legend <- "<img src='https://marcelocubero.github.io/capas_TFG/icon_loc.png'style='width:20px;height:20px;'> Localidades <br/> 
 
 <img src='https://marcelocubero.github.io/capas_TFG/icon_mep.png'style='width:20px;height:20px;'> Centros Educativos
@@ -276,15 +241,10 @@ renderLeaflet({
   localidades_c <- localidades [registros, , op = st_within]
   cantones_c <- cantones [registros, , op = st_intersects]
   
-  
-  
-  
-  
   leaflet() %>%
     addTiles(group = "OSM") %>%
     addProviderTiles(providers$CartoDB.DarkMatter, group = "CartoDB-Black") %>%
     addProviderTiles("Esri.WorldImagery", group = "ESRI") %>% 
-    
     
     addPolygons(
       data = registros,
@@ -305,7 +265,6 @@ renderLeaflet({
       title = "Zona"
     ) %>%
     
-    
     addMarkers(
       data= mep_c,
       lng= ~LONGITUD,
@@ -316,8 +275,8 @@ renderLeaflet({
                    popup = paste0(mep_c$Nivel,
                      ":<br>",
                      mep_c$Nombre),
-      group = "Centros Educativos"
-      
+      group = "Centros Educativos",
+      clusterOptions = markerClusterOptions()
     ) %>%
     
      addMarkers(
@@ -328,16 +287,14 @@ renderLeaflet({
                   iconUrl="https://marcelocubero.github.io/capas_TFG/icon_loc.png",
                   iconSize = c(15,15)),
                    popup = paste0(localidades_c$nombre),
-      group = "Localidades"
-      
+      group = "Localidades",
+      clusterOptions = markerClusterOptions()
     ) %>%
-    
     
      addControl(html = html_legend,
                 position ="topright"
                 ) %>%
-   
-    
+
     addPolygons(
       data = cantones_c,
       color = "#00008B",
@@ -350,7 +307,6 @@ renderLeaflet({
                      cantones_c$canton)
     ) %>%
     
-    
     addLayersControl(
       "bottomleft",
       baseGroups = c("OSM", "CartoDB-Black", "ESRI"),
@@ -362,6 +318,7 @@ renderLeaflet({
       ),
       options = layersControlOptions(collapsed = TRUE)
     ) %>%
+    
     addScaleBar("bottomright") %>%
     addMiniMap() %>%
     addResetMapButton() %>%
@@ -381,8 +338,6 @@ Column {data-width=350}
 
 ```{r}
 
-
-
 renderDT({
   registros <- filtrarRegistros()
   
@@ -394,7 +349,6 @@ renderDT({
       Distrito= distrito,
       Tipo_de_Zona= nomb_zona,
       Área_en_m2 = area_m2
-      
       
     ) %>%
     datatable(
