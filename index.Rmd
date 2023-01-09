@@ -44,6 +44,9 @@ library(stringr)
 cantones <-
   st_read("/vsicurl/https://marcelocubero.github.io/capas_TFG/cantones4.geojson",
           quiet = TRUE)
+distritos <-
+  st_read("/vsicurl/https://marcelocubero.github.io/capas_TFG/distritos3.geojson",
+          quiet = TRUE)
 
 cuadrantes <-
   st_read(
@@ -240,6 +243,7 @@ renderLeaflet({
   mep_c <- mep [registros, , op = st_within]
   localidades_c <- localidades [registros, , op = st_within]
   cantones_c <- cantones [registros, , op = st_intersects]
+  distritos_c <- distritos [registros, , op = st_intersects]
   
   leaflet() %>%
     addTiles(group = "OSM") %>%
@@ -307,14 +311,31 @@ renderLeaflet({
                      cantones_c$canton)
     ) %>%
     
+    addPolygons(
+      data = distritos_c,
+      color = "#00008B",
+      fillOpacity = 0,
+      weight = 1,
+      opacity = 1,
+      stroke = TRUE,
+      group = "Distritos"
+    ) %>%
+    
+    hideGroup("Cantones"
+     )%>%
+    
+     hideGroup("Distritos"
+     )%>%
+  
     addLayersControl(
       "bottomleft",
       baseGroups = c("OSM", "CartoDB-Black", "ESRI"),
       overlayGroups = c(
-        "Cantones" ,
         "Cuadrantes" ,
         "Centros Educativos" ,
-        "Localidades"
+        "Localidades",
+        "Cantones",
+        "Distritos"
       ),
       options = layersControlOptions(collapsed = TRUE)
     ) %>%
